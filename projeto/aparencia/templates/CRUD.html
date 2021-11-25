@@ -1,0 +1,174 @@
+O código abaixo seria adaptado para o site, porém eu não tive tempo de implementar :/
+
+
+
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+ <link href="static/ajax.css" rel="stylesheet" type="text/css">
+ <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+ <link rel="stylesheet" href="/resources/demos/style.css">
+ <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+ <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+ <title>CRUD Vacinação</title>
+</head>
+<body>
+ <h1>CRUD Vacinação</h1>
+ <hr/>
+ <div>
+     <p>
+         Pesquisar país: <input type="text" size="30" id="parte">
+         <button id="pesquisar">Buscar</button>
+     </p>
+ </div>
+ <hr/>
+ <form id="fm" method="post">
+     <table>
+         <tr>
+             <td>Número do país:</td>
+             <td><input type="text" id="idt" size="5" maxlength="5" disabled/></td>
+         </tr>
+         <tr>
+             <td>Nome do país:</td>
+             <td><input type="text" id="nme" size="50" maxlength="50" required/></td>
+         </tr>
+         <tr>
+             <td>Total 1º Dose:</td>
+             <td><input type="number" id="dose1" required/></td>
+         </tr>
+         <tr>
+             <td>Total 2º Dose:</td>
+             <td><input type="number" id="dose2" required/></td>
+         </tr>
+         <tr>
+             <td>Total da População:</td>
+             <td><input type="number" id="total" required/></td>
+         </tr>
+     </table>
+     <hr/>
+     <br/>
+     <button id="limpar">Limpar</button>
+     <button id="incluir">Incluir</button>
+     <button id="alterar">Alterar</button>
+     <button id="excluir">Excluir</button>
+     <br/>
+     <br/>
+ </form>
+ <div id="msg" style="font-size:22px; color: white; background-color: blue; padding: 30px; display: none">
+
+ </div>
+
+  <div id="dialogo" title="Confirma Exclusão" style="display:none;">
+    Você realmente quer excluir?
+  </div>
+
+</body>
+</html>
+
+<script>
+  $.ajaxSetup({
+     type: "POST"
+  });
+
+  $( "#fm" ).submit(function( event ) {
+      event.preventDefault();
+  });
+
+
+  $('#limpar').click(function (){
+      $('#msg').css("display", "none");
+      $('input').val("")
+
+      $('#incluir').prop('disabled', false);
+      $('#alterar').prop('disabled', true);
+      $('#excluir').prop('disabled', true);
+
+  });
+
+  $('#incluir').click(function (){
+      $('#fm').submit();
+      if ($('#nme').val() != '' && $('#dose1').val()!='' && $('#dose2').val()!='' && $('#total').val()!='') {
+          $.ajax({
+             url: "/incluir",
+             data: {nme: $('#nme').val(), dose1: $('#dose1').val(), dose2: $('#dose2').val(), total: $('#total').val()},
+             success: function(retorno) {
+                $('#msg').css("display", "none");
+                $("#msg").html(retorno);
+                $('#msg').slideDown("slow");
+                $("input").val("")
+             }
+          });
+      }
+  });
+
+  $('#pesquisar').click(function (){
+      $.ajax({
+         url: "/buscar",
+         data: {parte: $('#parte').val()},
+         success: function(retorno) {
+            if (retorno == '') {
+                $('#msg').css("display", "none");
+                $("#msg").html("Nome não encontrado na base de dados");
+                $('#msg').slideDown("slow");
+            }
+            else{
+                dados = retorno.split(',');
+                $('#idt').val(dados[0]);
+                $('#nme').val(dados[1]);
+                $('#dose1').val(dados[2]);
+                $('#dose2').val(dados[3]);
+                $('#total').val(dados[4]);
+            }
+         }
+      });
+      $('#incluir').prop('disabled', true);
+  });
+
+  $('#alterar').click(function (){
+      $('#fm').submit();
+      if ($('#idt').val() != '' && $('#nme').val() != '' && $('#dose1').val()!='' && $('#dose2').val()!='' && $('#total').val()!='') {
+          $.ajax({
+             url: "/alterar",
+             data: {idt: $('#idt').val(), nme: $('#nme').val(), dose1: $('#dose1').val(), dose2: $('#dose2').val(), total: $('#total').val()},
+             success: function(retorno) {
+                $('#msg').css("display", "none");
+                $("#msg").html(retorno);
+                $('#msg').slideDown("slow");
+                $("input").val("")
+             }
+          });
+      }
+  });
+
+  $('#excluir').click(function (){
+      if ($('#idt').val() != '' && $('#nme').val() != '') {
+          $("#dialogo").dialog({
+                buttons : {
+                  "Confirmar" : function() {
+                        $.ajax({
+                             url: "/excluir",
+                             data: {idt: $('#idt').val(), nme: $('#nme').val()},
+                             success: function(retorno) {
+                                $('#dialogo').dialog("close");
+                                $('#msg').css("display", "none");
+                                $("#msg").html(retorno);
+                                $('#msg').slideDown("slow");
+                                $("input").val("");
+                             }
+                        });
+                  },
+                  "Cancelar" : function() {
+                        $('#dialogo').dialog("close");
+                  }
+                }
+          });
+
+          $("#dialog").dialog("open");
+
+      }
+  });
+
+</script>
+'''
